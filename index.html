@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISC2 CC — Master Flashcards</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#06090f;--surface:#0d1421;--card:#111c2e;--border:rgba(255,255,255,0.07);
+  --green:#00e5b0;--gold:#ffc84a;--red:#ff5c5c;--blue:#38bdf8;--purple:#c084fc;
+  --text:#dce8ff;--muted:#4a6080;--dim:#8aaccc;
+  --d1:#00e5b0;--d2:#4ade80;--d3:#c084fc;--d4:#38bdf8;--d5:#fb923c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
+
+/* ── TOP BAR ── */
+.topbar{background:rgba(6,9,15,0.98);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:200;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:#fff;padding-right:12px;border-right:1px solid var(--border);flex-shrink:0;}
+.dtabs{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.dtab{padding:5px 12px;border-radius:50px;border:1.5px solid var(--border);background:transparent;font-size:11px;font-weight:500;cursor:pointer;transition:all .2s;color:var(--muted);white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.dtab[data-d="all"].on{border-color:var(--gold);color:var(--gold);background:rgba(255,200,74,0.08);}
+.dtab[data-d="1"].on{border-color:var(--d1);color:var(--d1);background:rgba(0,229,176,0.08);}
+.dtab[data-d="2"].on{border-color:var(--d2);color:var(--d2);background:rgba(74,222,128,0.08);}
+.dtab[data-d="3"].on{border-color:var(--d3);color:var(--d3);background:rgba(192,132,252,0.08);}
+.dtab[data-d="4"].on{border-color:var(--d4);color:var(--d4);background:rgba(56,189,248,0.08);}
+.dtab[data-d="5"].on{border-color:var(--d5);color:var(--d5);background:rgba(251,146,60,0.08);}
+.dtab:not(.on):hover{color:#fff;border-color:rgba(255,255,255,0.2);}
+
+/* ── PROGRESS ── */
+.prog{height:3px;background:rgba(255,255,255,0.04);}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .4s;}
+
+/* ── STATS ── */
+.stats{display:flex;justify-content:center;align-items:center;gap:0;background:var(--surface);border-bottom:1px solid var(--border);}
+.stat{flex:1;text-align:center;padding:10px 4px;border-right:1px solid var(--border);}
+.stat:last-child{border-right:none;}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;}
+.stat-l{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.sn-total{color:#fff;} .sn-know{color:var(--green);} .sn-rev{color:var(--red);} .sn-left{color:var(--gold);}
+
+/* ── DECK SELECT ── */
+#deck-screen{flex:1;display:flex;flex-direction:column;align-items:center;padding:32px 20px;}
+.deck-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,6vw,48px);letter-spacing:2px;color:#fff;text-align:center;margin-bottom:6px;}
+.deck-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:32px;}
+.deck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;width:100%;max-width:860px;}
+.deck-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.deck-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.deck-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.15);}
+.deck-card-tag{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.deck-card-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:#fff;margin-bottom:4px;line-height:1.2;}
+.deck-card-count{font-size:12px;color:var(--muted);}
+.deck-card-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:10px;margin-top:12px;overflow:hidden;}
+.deck-card-fill{height:100%;border-radius:10px;transition:width .3s;}
+
+/* ── STUDY SCREEN ── */
+#study-screen{flex:1;display:none;flex-direction:column;align-items:center;}
+
+.study-header{width:100%;max-width:680px;padding:14px 20px 0;display:flex;align-items:center;justify-content:space-between;}
+.back-btn{background:none;border:none;color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;}
+.back-btn:hover{color:#fff;}
+.study-title{font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.study-pos{font-size:12px;color:var(--muted);}
+
+/* ── FLASHCARD ── */
+.fc-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;width:100%;max-width:680px;margin:0 auto;}
+
+.card-scene{width:100%;perspective:1400px;cursor:pointer;}
+.card-body{width:100%;min-height:280px;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1);}
+.card-body.flipped{transform:rotateY(180deg);}
+
+.face{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:100%;min-height:280px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;position:absolute;top:0;left:0;}
+.face.back{transform:rotateY(180deg);}
+.face::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;}
+
+.face-type{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;opacity:.7;}
+.face-q{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,5vw,40px);letter-spacing:1px;color:#fff;line-height:1.15;max-width:500px;margin-bottom:10px;}
+.face-hint{font-size:12px;color:var(--muted);font-style:italic;}
+.tap-cue{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:20px;animation:breathe 2.4s ease-in-out infinite;}
+@keyframes breathe{0%,100%{opacity:.3;}50%{opacity:.8;}}
+
+.face-answer{font-size:15px;line-height:1.8;color:var(--dim);max-width:520px;text-align:left;}
+.face-answer strong{color:var(--gold);font-weight:500;}
+.face-ex{background:rgba(255,200,74,0.06);border:1px solid rgba(255,200,74,0.14);border-radius:10px;padding:11px 15px;margin-top:14px;font-size:13px;color:#c8b060;line-height:1.65;text-align:left;max-width:520px;width:100%;}
+
+/* invisible placeholder to hold height */
+.card-placeholder{width:100%;min-height:280px;visibility:hidden;}
+
+/* ── ACTION BUTTONS ── */
+.actions{display:flex;gap:10px;width:100%;max-width:680px;padding:0 20px;margin-top:16px;}
+.act-btn{flex:1;padding:13px 10px;border-radius:14px;border:none;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.act-btn:disabled{opacity:.25;cursor:default;transform:none!important;}
+.btn-no{background:rgba(255,92,92,0.1);border:1.5px solid rgba(255,92,92,0.2);color:var(--red);}
+.btn-no:not(:disabled):hover{background:rgba(255,92,92,0.2);transform:translateY(-1px);}
+.btn-yes{background:rgba(0,229,176,0.1);border:1.5px solid rgba(0,229,176,0.25);color:var(--green);}
+.btn-yes:not(:disabled):hover{background:rgba(0,229,176,0.2);transform:translateY(-1px);}
+
+.ctrl-row{display:flex;gap:8px;width:100%;max-width:680px;padding:10px 20px 24px;justify-content:center;flex-wrap:wrap;}
+.ctrl-btn{background:transparent;border:1.5px solid var(--border);border-radius:50px;padding:7px 18px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;letter-spacing:.5px;}
+.ctrl-btn:hover{border-color:rgba(255,255,255,0.2);color:#fff;}
+
+/* ── DONE SCREEN ── */
+#done-screen{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px 20px;text-align:center;}
+#done-screen.show{display:flex;}
+.done-icon{font-size:64px;margin-bottom:12px;}
+.done-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,7vw,56px);letter-spacing:2px;color:#fff;margin-bottom:8px;}
+.done-sub{font-size:14px;color:var(--muted);max-width:380px;line-height:1.7;margin-bottom:24px;}
+.done-row{display:flex;gap:28px;margin-bottom:28px;flex-wrap:wrap;justify-content:center;}
+.done-stat{text-align:center;}
+.done-n{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:1px;}
+.done-l{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.done-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.done-btn{padding:12px 24px;border-radius:50px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;border:none;transition:all .2s;}
+.done-btn:hover{transform:translateY(-1px);}
+.db-primary{background:var(--gold);color:#06090f;}
+.db-secondary{background:transparent;border:1.5px solid var(--border);color:var(--muted);}
+.db-secondary:hover{color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">CC Flashcards</div>
+  <div class="dtabs">
+    <button class="dtab on" data-d="all" onclick="filterDomain('all',this)">All 5 Domains</button>
+    <button class="dtab" data-d="1" onclick="filterDomain('1',this)">D1 · Security</button>
+    <button class="dtab" data-d="2" onclick="filterDomain('2',this)">D2 · Continuity</button>
+    <button class="dtab" data-d="3" onclick="filterDomain('3',this)">D3 · Access</button>
+    <button class="dtab" data-d="4" onclick="filterDomain('4',this)">D4 · Network</button>
+    <button class="dtab" data-d="5" onclick="filterDomain('5',this)">D5 · Operations</button>
+  </div>
+</div>
+
+<div class="prog"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n sn-total" id="sn-total">0</div><div class="stat-l">Total</div></div>
+  <div class="stat"><div class="stat-n sn-know" id="sn-know">0</div><div class="stat-l">Know It</div></div>
+  <div class="stat"><div class="stat-n sn-rev" id="sn-rev">0</div><div class="stat-l">Review</div></div>
+  <div class="stat"><div class="stat-n sn-left" id="sn-left">0</div><div class="stat-l">Left</div></div>
+</div>
+
+<!-- DECK SELECT SCREEN -->
+<div id="deck-screen">
+  <div class="deck-title">Pick a Deck</div>
+  <div class="deck-sub">Choose a topic or run all cards together</div>
+  <div class="deck-grid" id="deck-grid"></div>
+</div>
+
+<!-- STUDY SCREEN -->
+<div id="study-screen">
+  <div class="study-header">
+    <button class="back-btn" onclick="goHome()">← Decks</button>
+    <div class="study-title" id="study-title"></div>
+    <div class="study-pos" id="study-pos"></div>
+  </div>
+
+  <div class="fc-wrap">
+    <div class="card-scene" onclick="flipCard()" id="card-scene">
+      <div class="card-body" id="card-body">
+        <div class="face front" id="face-front">
+          <div class="face-type" id="ff-type"></div>
+          <div class="face-q" id="ff-q">Loading...</div>
+          <div class="face-hint" id="ff-hint"></div>
+          <div class="tap-cue">Tap to reveal answer</div>
+        </div>
+        <div class="face back" id="face-back">
+          <div class="face-type" id="fb-type"></div>
+          <div class="face-answer" id="fb-answer"></div>
+          <div class="face-ex" id="fb-ex"></div>
+        </div>
+      </div>
+      <div class="card-placeholder"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="act-btn btn-no" id="btn-no" onclick="mark('review')" disabled>✗ &nbsp;Still Learning</button>
+    <button class="act-btn btn-yes" id="btn-yes" onclick="mark('know')" disabled>✓ &nbsp;Got It</button>
+  </div>
+
+  <div class="ctrl-row">
+    <button class="ctrl-btn" onclick="prevCard()">← Back</button>
+    <button class="ctrl-btn" onclick="shuffleDeck()">⇄ Shuffle</button>
+    <button class="ctrl-btn" onclick="runReviewOnly()">Review Only</button>
+    <button class="ctrl-btn" onclick="resetDeck()">↺ Reset</button>
+  </div>
+</div>
+
+<!-- DONE SCREEN -->
+<div id="done-screen">
+  <div class="done-icon" id="done-icon">🎉</div>
+  <div class="done-h" id="done-h">Round Complete!</div>
+  <div class="done-sub" id="done-sub"></div>
+  <div class="done-row">
+    <div class="done-stat"><div class="done-n" style="color:var(--green)" id="dn-know">0</div><div class="done-l">Know It</div></div>
+    <div class="done-stat"><div class="done-n" style="color:var(--red)" id="dn-rev">0</div><div class="done-l">Still Learning</div></div>
+  </div>
+  <div class="done-btns">
+    <button class="done-btn db-primary" onclick="runReviewOnly()">Drill Review Cards</button>
+    <button class="done-btn db-secondary" onclick="shuffleDeck(); goStudy()">Shuffle &amp; Repeat</button>
+    <button class="done-btn db-secondary" onclick="goHome()">Pick Another Deck</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ALL CARDS — Terms + Concepts from all 5 domains
+// ═══════════════════════════════════════════════════════
+const CARDS = [
+
+// ─── DOMAIN 1 · SECURITY PRINCIPLES ────────────────
+{d:1, deck:"concepts", q:"What is the CIA Triad?", hint:"Three letters, three core security goals",
+ a:"<strong>C — Confidentiality:</strong> Only authorized people can see the data.<br><strong>I — Integrity:</strong> Data hasn't been changed without authorization.<br><strong>A — Availability:</strong> Systems and data are accessible when needed.",
+ ex:"Bank: only YOU see your balance (C) · no one secretly changes it (I) · ATM works when you need it (A)."},
+
+{d:1, deck:"concepts", q:"A flood destroys the server room. All data is inaccessible. Which CIA principle is violated?", hint:"Can users get to the data?",
+ a:"<strong>Availability.</strong> Even if data isn't stolen or changed, if authorized users can't access it — availability is violated.",
+ ex:"Ransomware, DDoS attacks, and natural disasters all attack availability."},
+
+{d:1, deck:"concepts", q:"A hacker secretly changes medication doses in a hospital database. Which CIA principle?", hint:"Was the data altered?",
+ a:"<strong>Integrity.</strong> Data was modified without authorization. It's no longer accurate or trustworthy.",
+ ex:"Financial fraud, record tampering, and man-in-the-middle attacks violate integrity."},
+
+{d:1, deck:"concepts", q:"What are the THREE authentication factors?", hint:"Know · Have · Are",
+ a:"<strong>Something you KNOW</strong> — password, PIN, security question.<br><strong>Something you HAVE</strong> — phone, badge, token.<br><strong>Something you ARE</strong> — fingerprint, face scan, iris (biometrics).",
+ ex:"Using two of these together = Multi-Factor Authentication (MFA)."},
+
+{d:1, deck:"concepts", q:"What is the difference between Authentication and Authorization?", hint:"One proves identity, one grants permissions",
+ a:"<strong>Authentication</strong> = proving who you are. (Username + password)<br><strong>Authorization</strong> = what you are allowed to do AFTER being authenticated.",
+ ex:"Hotel key proves you're a guest (auth). It only opens YOUR room, not all rooms (authz)."},
+
+{d:1, deck:"concepts", q:"What is Non-repudiation?", hint:"You cannot deny you did it",
+ a:"A security measure ensuring a person CANNOT deny performing an action. Provides cryptographic proof of origin.",
+ ex:"Digital signature on a contract — you can't later claim you didn't sign it."},
+
+{d:1, deck:"concepts", q:"What is Multi-Factor Authentication (MFA)?", hint:"Two different factor types required",
+ a:"Login requiring two or more factors from DIFFERENT categories. Much harder to compromise than a single factor.",
+ ex:"Password (know) + texted code (have) = MFA. Attacker needs BOTH — not just your password."},
+
+{d:1, deck:"concepts", q:"Risk = ?", hint:"Threat + Vulnerability together",
+ a:"Risk = the likelihood that a <strong>Threat</strong> will exploit a <strong>Vulnerability</strong> × the resulting <strong>Impact</strong>.<br><br>Threat = something that could cause harm.<br>Vulnerability = a weakness that could be exploited.",
+ ex:"Unlocked door (vulnerability) + neighborhood thief (threat) = burglary risk."},
+
+{d:1, deck:"concepts", q:"What are the FOUR ways to respond to risk?", hint:"Avoid · Mitigate · Transfer · Accept",
+ a:"<strong>Avoid</strong> — Stop the risky activity entirely.<br><strong>Mitigate</strong> — Add controls to reduce the risk.<br><strong>Transfer</strong> — Move risk to someone else (insurance).<br><strong>Accept</strong> — Document it and live with it.",
+ ex:"Buying cyber insurance = Transfer. Adding MFA = Mitigate. Not collecting SSNs at all = Avoid."},
+
+{d:1, deck:"concepts", q:"Policy vs Standard vs Procedure vs Guideline — what is each?", hint:"Rules from broad to specific",
+ a:"<strong>Policy</strong> — High-level rule. The WHY and WHAT.<br><strong>Standard</strong> — Specific mandatory requirement. The HOW MUCH.<br><strong>Procedure</strong> — Step-by-step instructions. The HOW TO.<br><strong>Guideline</strong> — A suggestion. NOT mandatory.",
+ ex:"Policy: 'Protect all data.' Standard: 'Passwords ≥ 12 chars.' Procedure: 'Step 1, go to portal...' Guideline: 'Consider a password manager.'"},
+
+{d:1, deck:"concepts", q:"What are the ISC2 Code of Ethics 4 Canons — in priority order?", hint:"Society is always FIRST",
+ a:"<strong>1.</strong> Protect society, public trust, and the common good.<br><strong>2.</strong> Act honorably, honestly, justly, and lawfully.<br><strong>3.</strong> Provide diligent service to your employer/clients.<br><strong>4.</strong> Advance and protect the profession.",
+ ex:"Boss asks you to hide a breach? Canon 2 (be lawful) OVERRIDES Canon 3 (serve employer). Always."},
+
+// DOMAIN 1 TERMS
+{d:1, deck:"terms", q:"Define: Confidentiality", hint:"Who is allowed to see it?",
+ a:"Only AUTHORIZED people can access the information. Prevents unauthorized disclosure.",
+ ex:"Your medical records — only your doctor and authorized staff can view them, not the public."},
+
+{d:1, deck:"terms", q:"Define: Integrity", hint:"Has the data been altered?",
+ a:"Information is accurate and has NOT been altered without authorization. What went in = what comes out.",
+ ex:"A hacker changing a patient's medication dose = integrity violation."},
+
+{d:1, deck:"terms", q:"Define: Availability", hint:"Can you get to it when you need it?",
+ a:"Information and systems are accessible and usable when authorized users need them.",
+ ex:"Ransomware locking employees out of files = availability violation, even if nothing is stolen."},
+
+{d:1, deck:"terms", q:"Define: Threat", hint:"What could cause harm?",
+ a:"Any potential event or actor that could exploit a vulnerability to cause damage.",
+ ex:"Hackers, disgruntled employees, floods, power outages, software bugs."},
+
+{d:1, deck:"terms", q:"Define: Vulnerability", hint:"What weakness exists?",
+ a:"A flaw or weakness in a system, process, or control that a threat could exploit.",
+ ex:"No password on a server, unpatched software, an unlocked server room door."},
+
+{d:1, deck:"terms", q:"Define: Risk Mitigation", hint:"Reduce the risk",
+ a:"Taking action to REDUCE the likelihood or impact of a risk. The most common risk response.",
+ ex:"Adding a firewall, requiring MFA, encrypting data, security awareness training."},
+
+{d:1, deck:"terms", q:"Define: Risk Transfer", hint:"Move it to someone else",
+ a:"Shifting the financial impact of a risk to another party. The threat still exists — someone else absorbs the cost.",
+ ex:"Buying cybersecurity insurance = risk transfer."},
+
+{d:1, deck:"terms", q:"Define: Risk Acceptance", hint:"Document it and live with it",
+ a:"Formal decision to acknowledge a risk and take NO action because the fix cost exceeds the potential impact. Must be documented.",
+ ex:"$500 risk costs $50,000 to fix — accepted with management sign-off."},
+
+// ─── DOMAIN 2 · BUSINESS CONTINUITY ───────────────
+{d:2, deck:"concepts", q:"What is the difference between a BCP and a DRP?", hint:"One covers IT only, one covers everything",
+ a:"<strong>BCP (Business Continuity Plan)</strong> — Keeps the WHOLE organization running. Covers people, processes, facilities, AND technology.<br><br><strong>DRP (Disaster Recovery Plan)</strong> — Subset of BCP focused ONLY on restoring IT systems and data.",
+ ex:"Hurricane hits HQ. BCP = how payroll, operations, and comms continue. DRP = how IT gets servers back online."},
+
+{d:2, deck:"concepts", q:"What is RTO and what does it measure?", hint:"Time to recover",
+ a:"<strong>RTO — Recovery Time Objective.</strong> Maximum time a system can be DOWN before causing unacceptable business damage.",
+ ex:"RTO = 4 hours → system MUST be back online within 4 hours of going down."},
+
+{d:2, deck:"concepts", q:"What is RPO and what does it determine?", hint:"Data loss tolerance",
+ a:"<strong>RPO — Recovery Point Objective.</strong> Maximum data loss measured in TIME. Determines how frequently backups must run.",
+ ex:"RPO = 1 hour → backups run every hour. A disaster could lose AT MOST 1 hour of data."},
+
+{d:2, deck:"concepts", q:"Hot Site vs Warm Site vs Cold Site — what's the difference?", hint:"Speed vs cost tradeoff",
+ a:"<strong>Hot Site</strong> — Fully operational, real-time replication. Failover in MINUTES. Most expensive.<br><strong>Warm Site</strong> — Hardware ready, data needs loading. Ready in HOURS. Middle cost.<br><strong>Cold Site</strong> — Empty room with power. Bring equipment. DAYS to weeks. Cheapest.",
+ ex:"Bank needs 5-minute failover = Hot Site. Nonprofit can tolerate days down = Cold Site."},
+
+{d:2, deck:"concepts", q:"What are the 6 phases of Incident Response — in order?", hint:"Prep → ID → Contain → Eradicate → Recover → Learn",
+ a:"<strong>1. Preparation</strong> — Train and plan BEFORE an incident.<br><strong>2. Identification</strong> — Detect that an incident is occurring.<br><strong>3. Containment</strong> — Stop the spread. Isolate affected systems.<br><strong>4. Eradication</strong> — Remove the threat completely.<br><strong>5. Recovery</strong> — Restore systems to normal.<br><strong>6. Lessons Learned</strong> — Review and improve.",
+ ex:"Malware found → disconnect server (Contain) → delete malware (Eradicate) → restore backup (Recover) → review (Lessons)."},
+
+{d:2, deck:"concepts", q:"A hospital's checkout system costs $10,000/minute when down. How does this affect recovery planning?", hint:"High financial impact = what kind of RTO?",
+ a:"It gets the <strong>shortest RTO</strong>. The Business Impact Analysis (BIA) quantifies financial impact per hour to prioritize which systems recover FIRST.",
+ ex:"BIA is triage — highest financial impact = fastest recovery requirement."},
+
+{d:2, deck:"terms", q:"Define: BIA — Business Impact Analysis", hint:"Which systems matter most?",
+ a:"Analysis identifying CRITICAL business functions and quantifying the impact of disrupting them. Used to set RTO and RPO priorities.",
+ ex:"BIA reveals checkout system = $10k/min loss → shortest RTO. Newsletter delayed → no urgency."},
+
+{d:2, deck:"terms", q:"Define: Containment (Incident Response)", hint:"Stop the spread NOW",
+ a:"Incident response phase focused on STOPPING further damage by isolating affected systems. Comes BEFORE eradication.",
+ ex:"Disconnecting an infected server from the network immediately after discovering malware."},
+
+{d:2, deck:"terms", q:"Define: Hot Site", hint:"Fully operational backup — minutes",
+ a:"Fully operational duplicate of the primary site with REAL-TIME data replication. Fastest recovery. Most expensive.",
+ ex:"Bank hot site mirrors all transactions live. HQ fails → hot site takes over in minutes."},
+
+// ─── DOMAIN 3 · ACCESS CONTROLS ───────────────────
+{d:3, deck:"concepts", q:"What is Least Privilege?", hint:"Minimum access — nothing extra",
+ a:"Users receive ONLY the minimum access required to perform their job. No additional permissions beyond what is needed.",
+ ex:"Data entry clerk can enter data but NOT delete records, access payroll, or view executive reports."},
+
+{d:3, deck:"concepts", q:"What is Segregation of Duties (SoD) and why does it matter?", hint:"Split duties — prevent one person from doing it all",
+ a:"Critical tasks are divided among MULTIPLE people so no single person can commit fraud or cause catastrophic harm alone.",
+ ex:"The person who creates a payment ≠ the person who approves it. One person doing both = fraud risk."},
+
+{d:3, deck:"concepts", q:"DAC vs MAC vs RBAC — what's the difference?", hint:"Owner · Labels · Job Role",
+ a:"<strong>DAC</strong> — DATA OWNER decides who gets access. Flexible. (Google Docs sharing)<br><strong>MAC</strong> — SYSTEM decides based on security labels. Owner can't override. Government/military.<br><strong>RBAC</strong> — JOB ROLE determines access. Most common in business.",
+ ex:"Google Drive = DAC. Military Top Secret system = MAC. Hospital nurse permissions = RBAC."},
+
+{d:3, deck:"concepts", q:"Preventive vs Detective vs Corrective vs Deterrent controls — what does each DO?", hint:"Stop · Find · Fix · Discourage",
+ a:"<strong>Preventive</strong> — STOPS the bad thing from happening. (Firewall, MFA, locks)<br><strong>Detective</strong> — FINDS that something bad happened. (Cameras, IDS, audit logs)<br><strong>Corrective</strong> — FIXES damage after the fact. (Restore backup, patch)<br><strong>Deterrent</strong> — DISCOURAGES attackers but doesn't stop them. (Warning signs)",
+ ex:"Warning sign on fence = Deterrent. Actual camera recording = Detective. Locked door = Preventive. Restoring from backup = Corrective."},
+
+{d:3, deck:"concepts", q:"What is a Mantrap and what attack does it prevent?", hint:"Double-door airlock",
+ a:"A two-door entry system where the FIRST door must close before the SECOND opens. Only one person passes at a time.<br><br>Prevents: <strong>tailgating</strong> (someone sneaking in behind an authorized person).",
+ ex:"Also called an access control vestibule. Common in data centers and secure facilities."},
+
+{d:3, deck:"concepts", q:"Need to Know vs Least Privilege — what's the difference?", hint:"Both restrict access but how?",
+ a:"<strong>Least Privilege</strong> — Restricts HOW MUCH access you have based on your job role.<br><strong>Need to Know</strong> — Restricts WHICH SPECIFIC information you can access, even if you have the clearance level.",
+ ex:"A Top Secret analyst (clearance = least privilege) still can't access a weapons project they're not assigned to (need to know)."},
+
+{d:3, deck:"terms", q:"Define: DAC — Discretionary Access Control", hint:"Owner controls sharing",
+ a:"The resource OWNER decides who can access it and what they can do. Flexible but less secure.",
+ ex:"You create a Google Doc and choose who to share it with. You own it, you decide."},
+
+{d:3, deck:"terms", q:"Define: MAC — Mandatory Access Control", hint:"System controls everything — government/military",
+ a:"System enforces access based on security CLASSIFICATION LABELS. Owner CANNOT override. Central authority controls all access.",
+ ex:"Top Secret files = ONLY Top Secret clearance users. The file owner can't share it down-level."},
+
+{d:3, deck:"terms", q:"Define: RBAC — Role-Based Access Control", hint:"Job title = access level",
+ a:"Permissions assigned to JOB ROLES. Users get access by being assigned to a role. Most common in business environments.",
+ ex:"All 'Nurses' can view patient records. All 'Billing Staff' can access financial data."},
+
+{d:3, deck:"terms", q:"Define: Physical vs Logical Access Controls", hint:"Tangible vs software-based",
+ a:"<strong>Physical</strong> — Tangible barriers. Fences, key card readers, guards, locks, cameras, mantraps.<br><strong>Logical</strong> — Software-based controls. Passwords, MFA, firewalls, ACLs, encryption, audit logs.",
+ ex:"A locked server room door = physical. Requiring a password to log in = logical."},
+
+// ─── DOMAIN 4 · NETWORK SECURITY ──────────────────
+{d:4, deck:"concepts", q:"What are the 7 layers of the OSI Model — in order?", hint:"Please Do Not Throw Sausage Pizza Away",
+ a:"<strong>1</strong> Physical · <strong>2</strong> Data Link · <strong>3</strong> Network (IP) · <strong>4</strong> Transport (TCP/ports) · <strong>5</strong> Session · <strong>6</strong> Presentation (encryption) · <strong>7</strong> Application (HTTP, DNS, email)",
+ ex:"Mnemonic: <strong>P</strong>lease <strong>D</strong>o <strong>N</strong>ot <strong>T</strong>hrow <strong>S</strong>ausage <strong>P</strong>izza <strong>A</strong>way"},
+
+{d:4, deck:"concepts", q:"IDS vs IPS — what is the critical difference?", hint:"One alerts, one ACTS",
+ a:"<strong>IDS (Intrusion Detection System)</strong> — Detects suspicious activity and sends ALERTS. Does NOT automatically block anything. Like a smoke detector.<br><br><strong>IPS (Intrusion Prevention System)</strong> — Detects AND AUTOMATICALLY BLOCKS attacks. Like a sprinkler system.",
+ ex:"Exam tip: If the answer says 'automatically blocked' = IPS. If it says 'sent an alert' = IDS."},
+
+{d:4, deck:"concepts", q:"What is a DMZ and why do organizations use one?", hint:"Buffer zone for public-facing servers",
+ a:"A network segment between the PUBLIC internet and the INTERNAL network. Public-facing servers (web, email) live here. Internal systems stay protected behind it.",
+ ex:"Web server in DMZ → internet users can reach it, but attackers can't use it to access HR or finance systems."},
+
+{d:4, deck:"concepts", q:"What are the key port numbers you must know for the exam?", hint:"HTTP · HTTPS · SSH · Telnet · DNS",
+ a:"<strong>HTTP = 80</strong> · <strong>HTTPS = 443</strong> · <strong>SSH = 22</strong> (secure remote) · <strong>Telnet = 23</strong> (INSECURE — never use) · FTP = 21 · SMTP = 25 · DNS = 53 · DHCP = 67/68",
+ ex:"Always SSH (22) over Telnet (23). Always HTTPS (443) over HTTP (80). Telnet sends everything as readable plaintext."},
+
+{d:4, deck:"concepts", q:"Why is Telnet a security risk? What should be used instead?", hint:"Plaintext vs encrypted remote access",
+ a:"Telnet transmits ALL data — including usernames and passwords — in PLAINTEXT. Anyone intercepting the traffic can read it.<br><br>Always use <strong>SSH (port 22)</strong> instead. SSH encrypts all communication.",
+ ex:"On the exam: Telnet = insecure. SSH = secure. This is a guaranteed question."},
+
+{d:4, deck:"concepts", q:"Symmetric vs Asymmetric encryption — what's the difference?", hint:"One key vs two keys",
+ a:"<strong>Symmetric</strong> — SAME key encrypts and decrypts. Fast. Must share the key securely. Standard: AES.<br><br><strong>Asymmetric</strong> — PUBLIC key encrypts, PRIVATE key decrypts. Solves key-sharing problem. Slower. Standard: RSA.",
+ ex:"HTTPS uses BOTH: RSA (asymmetric) to exchange a session key securely, then AES (symmetric) for fast data transfer."},
+
+{d:4, deck:"concepts", q:"What is hashing and what is it used for?", hint:"One-way — cannot be reversed",
+ a:"A ONE-WAY mathematical transformation of data into a fixed-length hash value. Cannot be reversed back to original data.<br><br>Used to verify <strong>INTEGRITY</strong> — not encryption.",
+ ex:"SHA-256 hash of a downloaded file — if the hash matches the posted value, the file was NOT tampered with in transit."},
+
+{d:4, deck:"concepts", q:"WEP vs WPA vs WPA2 vs WPA3 — which is secure?", hint:"Only two are acceptable",
+ a:"<strong>WEP</strong> — Completely BROKEN. Never use. Can be cracked in minutes.<br><strong>WPA</strong> — Has known weaknesses. Avoid.<br><strong>WPA2</strong> — Current standard. AES encryption. Acceptable.<br><strong>WPA3</strong> — Newest and strongest. Best choice.",
+ ex:"Setting up a new Wi-Fi network → always pick WPA2 or WPA3. WEP is a guaranteed wrong answer."},
+
+{d:4, deck:"terms", q:"Define: Firewall", hint:"The network's gatekeeper",
+ a:"Network device (hardware or software) that monitors and FILTERS incoming and outgoing traffic based on security rules.",
+ ex:"Blocks port 23 (Telnet) while allowing port 443 (HTTPS). Three types: packet filtering, stateful, next-gen (NGFW)."},
+
+{d:4, deck:"terms", q:"Define: VPN — Virtual Private Network", hint:"Encrypted tunnel",
+ a:"Creates an ENCRYPTED connection (tunnel) over a public network, making remote traffic private and secure.",
+ ex:"Remote employees use VPN to access company systems as if physically sitting in the office."},
+
+{d:4, deck:"terms", q:"Define: Encryption", hint:"Scrambles data so only the key-holder can read it",
+ a:"Converts readable data (PLAINTEXT) into unreadable data (CIPHERTEXT) using an algorithm and key. Requires the key to decrypt.",
+ ex:"HTTPS encrypts your banking session — even if intercepted, it looks like gibberish without the decryption key."},
+
+// ─── DOMAIN 5 · SECURITY OPERATIONS ──────────────
+{d:5, deck:"concepts", q:"Virus vs Worm — what is the key difference?", hint:"One needs you to click. One doesn't.",
+ a:"<strong>Virus</strong> — Attaches to files. Needs HUMAN ACTION (clicking/running an infected file) to spread.<br><br><strong>Worm</strong> — Self-replicates and spreads across networks AUTOMATICALLY. No user action needed.",
+ ex:"WannaCry (2017) was a WORM — infected 200,000+ computers with zero user clicks required."},
+
+{d:5, deck:"concepts", q:"What is Ransomware?", hint:"Encrypts + demands payment",
+ a:"Malware that ENCRYPTS the victim's files and demands payment (ransom) to restore access.",
+ ex:"WannaCry encrypted files globally, demanded Bitcoin. Defense: regular backups + DRP + patch management."},
+
+{d:5, deck:"concepts", q:"Phishing vs Spear Phishing vs Whaling — what's the difference?", hint:"Mass · Targeted · Executive",
+ a:"<strong>Phishing</strong> — Mass fake emails to anyone. Generic.<br><strong>Spear Phishing</strong> — Targeted at a specific person using personal details.<br><strong>Whaling</strong> — Spear phishing targeting executives (CEO, CFO). High stakes.",
+ ex:"Generic 'your account is locked' email = Phishing. Personalized email to CFO referencing a real project = Whaling."},
+
+{d:5, deck:"concepts", q:"What is Vishing? What is Smishing?", hint:"V = Voice · S = SMS",
+ a:"<strong>Vishing</strong> — Social engineering via PHONE CALLS. Attacker impersonates IT, bank, IRS, etc.<br><br><strong>Smishing</strong> — Social engineering via SMS TEXT MESSAGES with malicious links.",
+ ex:"Vishing: 'Hi, IT here. Your account is compromised. I need your password.' Smishing: 'Your package is held. Tap here.'"},
+
+{d:5, deck:"concepts", q:"What is System Hardening?", hint:"Remove everything not needed",
+ a:"Securing a system by REDUCING its attack surface — every unnecessary service, port, account, and feature removed or disabled.",
+ ex:"Hardening a server: uninstall FTP, close port 23 (Telnet), disable guest accounts, change defaults, apply all patches."},
+
+{d:5, deck:"concepts", q:"Why is Patch Management critical to security?", hint:"Known vulnerabilities + available fix = no excuse",
+ a:"Most successful attacks exploit KNOWN vulnerabilities that vendors have already released patches for. Unpatched systems = easy targets.",
+ ex:"WannaCry exploited a vulnerability with a Windows patch available 2 MONTHS earlier. Patching it would have prevented infection."},
+
+{d:5, deck:"concepts", q:"What are the three data states and how is each protected?", hint:"At Rest · In Transit · In Use",
+ a:"<strong>At Rest</strong> — Stored on disk/database. Protect with: full-disk encryption (BitLocker, AES).<br><strong>In Transit</strong> — Moving across network. Protect with: TLS/HTTPS, VPN, encrypted email.<br><strong>In Use</strong> — Being processed in RAM/CPU. Protect with: access controls, screen locks.",
+ ex:"Stolen laptop with BitLocker = data at rest is safe. Unencrypted email = data in transit at risk."},
+
+{d:5, deck:"concepts", q:"What is a SIEM and what type of control is it?", hint:"Collects all logs — fires real-time alerts",
+ a:"<strong>SIEM (Security Information and Event Management)</strong> — Collects and analyzes logs from many sources simultaneously. Generates real-time threat alerts.<br><br>It is a <strong>DETECTIVE</strong> control — it detects, it does NOT prevent.",
+ ex:"SIEM sees 50 failed logins in 2 minutes and fires an alert. A human or IPS then acts on it."},
+
+{d:5, deck:"concepts", q:"What is Data Classification and what are the levels?", hint:"Government vs business — what are the labels?",
+ a:"Organizing data into sensitivity categories to ensure appropriate protection.<br><br><strong>Government:</strong> Top Secret → Secret → Confidential → Unclassified<br><strong>Business:</strong> Restricted/Confidential → Internal/Private → Public",
+ ex:"Military intelligence = Top Secret. Company financials = Confidential. Press release = Public."},
+
+{d:5, deck:"terms", q:"Define: Rootkit", hint:"Hides deep in the OS",
+ a:"Malware that embeds at the OS level, hiding from antivirus tools while giving attackers PERSISTENT HIDDEN ACCESS.",
+ ex:"Hardest malware to detect and remove. Lives below where standard antivirus scans. Often requires full OS reinstall."},
+
+{d:5, deck:"terms", q:"Define: Social Engineering", hint:"Attacks people, not systems",
+ a:"Psychological manipulation of people into performing actions or revealing confidential information. Exploits HUMAN TRUST, not technical vulnerabilities.",
+ ex:"Attacker calls IT pretending to be a frustrated executive, pressuring them to reset a password without verification."},
+
+{d:5, deck:"terms", q:"Define: Audit Trail", hint:"Chronological proof of who did what",
+ a:"A chronological record of system activities providing documentary evidence of actions for investigations and compliance. Must be protected from tampering.",
+ ex:"Audit trail shows jsmith accessed the payroll database at 2 AM — used to investigate suspicious activity."},
+
+{d:5, deck:"terms", q:"Define: Spyware", hint:"Secretly watches you",
+ a:"Malware that SILENTLY monitors user activity — keystrokes, passwords, browsing history — and reports to an attacker.",
+ ex:"A keylogger that records every password you type and silently sends it to an attacker's server."},
+
+{d:5, deck:"terms", q:"Define: Trojan Horse", hint:"Looks legitimate — hides malicious payload",
+ a:"Malware DISGUISED as legitimate software. Contains hidden malicious code that runs when you install or execute it.",
+ ex:"'Free game download' that secretly installs a keylogger. Looks harmless, acts malicious."},
+
+// ══════════════════════════════════════════════════
+// DOMAIN 1 ADDITIONS — Security Principles
+// ══════════════════════════════════════════════════
+
+{d:1, deck:"concepts", q:"What is Privacy and how does it differ from Confidentiality?", hint:"One is a right, one is a control",
+ a:"<strong>Privacy</strong> — The right of individuals to control information about themselves. A legal and ethical concept.<br><strong>Confidentiality</strong> — A security control that PROTECTS information from unauthorized access. The tool that enforces privacy.",
+ ex:"Privacy: you have a right to control your medical history. Confidentiality: the hospital encrypts it so only authorized staff can see it."},
+
+{d:1, deck:"concepts", q:"What are the THREE types of security controls? Give examples of each.", hint:"Technical · Administrative · Physical",
+ a:"<strong>Technical</strong> — Software/hardware controls. Firewalls, MFA, encryption, IDS, antivirus.<br><strong>Administrative</strong> — Policies, procedures, training, background checks, awareness programs.<br><strong>Physical</strong> — Locks, guards, cameras, fences, mantraps, lighting.",
+ ex:"Exam tip: A 'security awareness training program' = Administrative. Always. Not Technical, not Physical."},
+
+{d:1, deck:"concepts", q:"What is Risk Tolerance and how does it affect security decisions?", hint:"How much risk is the organization willing to live with?",
+ a:"The level of risk an organization is willing to ACCEPT as part of doing business. Varies by industry and leadership appetite.<br><br>High risk tolerance → fewer controls. Low risk tolerance → more controls.",
+ ex:"A startup might accept more data risk to ship fast. A bank has near-zero tolerance — regulatory and financial stakes are too high."},
+
+{d:1, deck:"concepts", q:"What is a Risk Assessment and what does it produce?", hint:"Find it · Measure it · Prioritize it",
+ a:"A process that <strong>identifies</strong> threats and vulnerabilities, <strong>evaluates</strong> likelihood and impact, and <strong>prioritizes</strong> which risks need treatment first.<br><br>Output: a prioritized list of risks for management decisions.",
+ ex:"IT risk assessment finds: unpatched server (high likelihood, high impact) = treat first. Outdated wallpaper = accept."},
+
+{d:1, deck:"concepts", q:"Regulations vs Policies vs Standards vs Guidelines — which are mandatory?", hint:"Two are mandatory, one is optional",
+ a:"<strong>Regulations/Laws</strong> — Mandatory. Set by government. Violations = legal penalties. (HIPAA, GDPR)<br><strong>Policies</strong> — Mandatory INSIDE the org. Senior management sets them.<br><strong>Standards</strong> — Mandatory technical requirements that support policies.<br><strong>Guidelines</strong> — Suggestions only. NOT mandatory.",
+ ex:"HIPAA = regulation (federal law). 'All passwords must be 12+ chars' = standard. 'Consider using a password manager' = guideline."},
+
+{d:1, deck:"terms", q:"Define: Privacy", hint:"Individual right to control personal information",
+ a:"The right of individuals to determine how their personal information is collected, used, and shared. Protected by law in many jurisdictions.",
+ ex:"GDPR (Europe) and HIPAA (US healthcare) are laws that enforce privacy rights."},
+
+{d:1, deck:"terms", q:"Define: Risk Assessment", hint:"Evaluate likelihood × impact",
+ a:"Systematic process of identifying threats and vulnerabilities, then evaluating the likelihood and impact of each to prioritize response.",
+ ex:"Risk assessment scores: Unpatched public-facing server = Critical. Expired printer toner = Negligible."},
+
+{d:1, deck:"terms", q:"Define: Governance", hint:"Rules, roles, and oversight at the top level",
+ a:"The framework of policies, procedures, and oversight ensuring an organization's security activities align with business goals and legal requirements.",
+ ex:"An organization's Security Policy Committee reviewing and approving the annual security policy = governance in action."},
+
+{d:1, deck:"terms", q:"Define: Regulation", hint:"Government-imposed mandatory requirement",
+ a:"A legally enforceable rule imposed by a government body or industry authority. Non-compliance results in fines, legal liability, or loss of operating license.",
+ ex:"HIPAA (healthcare data), PCI-DSS (payment cards), GDPR (EU personal data) — all regulations with real penalties."},
+
+// ══════════════════════════════════════════════════
+// DOMAIN 2 ADDITIONS — BC/DR/Incident Response
+// ══════════════════════════════════════════════════
+
+{d:2, deck:"concepts", q:"What are the THREE types of backup and when does each run?", hint:"Full · Incremental · Differential",
+ a:"<strong>Full Backup</strong> — Copies ALL data every time. Slowest to back up, FASTEST to restore.<br><strong>Incremental</strong> — Backs up only changes since the LAST backup (any type). Fast to back up, SLOWEST to restore (needs all increments).<br><strong>Differential</strong> — Backs up changes since the last FULL backup. Middle ground on speed both ways.",
+ ex:"Sunday = Full. Mon–Sat = Incremental (backs up only that day's changes). Restore needs Sunday + every daily backup."},
+
+{d:2, deck:"concepts", q:"What is a Warm Site and how does it compare to Hot and Cold?", hint:"Hardware ready — data needs loading",
+ a:"<strong>Warm Site</strong> — Hardware and infrastructure are in place and ready. Data must be loaded from backups. Recovery takes HOURS.<br><br>Sits between Hot (minutes, real-time data, most expensive) and Cold (days/weeks, empty shell, cheapest).",
+ ex:"Mid-size company with a 24-hour RTO = Warm Site. Enough time to restore data, but hardware is already there."},
+
+{d:2, deck:"concepts", q:"What is the difference between an Incident Response Plan (IRP) and a Business Continuity Plan (BCP)?", hint:"Security event vs any disruption",
+ a:"<strong>IRP (Incident Response Plan)</strong> — Specific to SECURITY INCIDENTS (breaches, malware, attacks). Focus: contain, eradicate, recover.<br><strong>BCP (Business Continuity Plan)</strong> — Covers ANY disruptive event (natural disasters, power outages, pandemics). Focus: keep the business running.",
+ ex:"Ransomware attack → IRP. Hurricane closes HQ for a week → BCP. Often both activate at the same time."},
+
+{d:2, deck:"concepts", q:"What roles and responsibilities matter in Incident Response?", hint:"Who does what when an incident hits?",
+ a:"<strong>Incident Response Team (IRT)</strong> — Executes the plan. Includes security, IT, legal, HR, and communications.<br><strong>IR Lead / CISO</strong> — Declares incidents, makes escalation decisions.<br><strong>Legal/Compliance</strong> — Advises on breach notification requirements.<br><strong>Communications</strong> — Manages internal and external messaging.",
+ ex:"Exam tip: Legal must be involved in ANY breach — they determine notification obligations under HIPAA, GDPR, etc."},
+
+{d:2, deck:"terms", q:"Define: RPO — Recovery Point Objective", hint:"Maximum acceptable data loss measured in time",
+ a:"The maximum amount of data loss (measured in TIME) an organization can tolerate. Drives how frequently backups must run.",
+ ex:"RPO = 4 hours → backups must run every 4 hours. A disaster can only lose at most 4 hours of data."},
+
+{d:2, deck:"terms", q:"Define: RTO — Recovery Time Objective", hint:"Maximum time system can be down",
+ a:"The maximum time a system or process can be UNAVAILABLE before causing unacceptable business harm. Drives recovery speed requirements.",
+ ex:"RTO = 2 hours → the system MUST be restored within 2 hours of failure. Requires a Hot or Warm Site."},
+
+{d:2, deck:"terms", q:"Define: Warm Site", hint:"Hardware ready, data must be loaded",
+ a:"A disaster recovery facility with hardware and network infrastructure in place, but no live data. Data must be loaded from backups before operations can resume. Recovery time: hours.",
+ ex:"Company RTO = 12 hours → Warm Site is sufficient and costs far less than a Hot Site."},
+
+{d:2, deck:"terms", q:"Define: Cold Site", hint:"Empty room — bring your own everything",
+ a:"A disaster recovery facility with only basic utilities (power, cooling, connectivity). No hardware, no data. Organization must bring everything. Recovery time: days to weeks.",
+ ex:"Small nonprofit with a 2-week RTO and a tight budget = Cold Site. Not ideal for critical systems."},
+
+{d:2, deck:"terms", q:"Define: Full Backup", hint:"Everything, every time",
+ a:"A backup that copies ALL data each time it runs, regardless of what has changed. Slowest to create, but the FASTEST and simplest to restore from.",
+ ex:"Sunday full backup = one tape to restore everything. Contrast with incremental, which needs multiple tapes."},
+
+{d:2, deck:"terms", q:"Define: Incident Response Plan (IRP)", hint:"Documented playbook for security events",
+ a:"A documented, pre-approved procedure for detecting, containing, eradicating, and recovering from security incidents. Assigns clear roles and decision-making authority.",
+ ex:"Without an IRP, teams improvise during a breach — wasting critical minutes and potentially destroying evidence."},
+
+// ══════════════════════════════════════════════════
+// DOMAIN 3 ADDITIONS — Access Controls
+// ══════════════════════════════════════════════════
+
+{d:3, deck:"concepts", q:"What are the THREE categories of physical access controls?", hint:"Badges · Monitoring · Environmental design",
+ a:"<strong>Badge/Key Card Systems</strong> — Grant or deny entry electronically. Log who enters and when.<br><strong>Monitoring Controls</strong> — CCTV cameras, security guards, alarm systems, visitor logs.<br><strong>Environmental Design</strong> — Fences, lighting, landscaping arranged to deter and channel access.",
+ ex:"Parking lot lights, bollards blocking vehicle access, and camera placement are all environmental design controls."},
+
+{d:3, deck:"concepts", q:"Authorized vs Unauthorized personnel — why does classification matter?", hint:"Who belongs there and who doesn't?",
+ a:"<strong>Authorized Personnel</strong> — Verified, approved individuals with a legitimate need to be in a space or access a system.<br><strong>Unauthorized Personnel</strong> — Anyone without that approval, including visitors without escorts.<br><br>Access controls enforce this boundary — physically and logically.",
+ ex:"A contractor who is badged for the lobby but NOT the server room is unauthorized in the server room, even if they're in the building."},
+
+{d:3, deck:"concepts", q:"What is Identity and Access Management (IAM)?", hint:"Who you are + what you can do",
+ a:"A framework of processes and technologies that manages DIGITAL IDENTITIES and controls what resources each identity can access.<br><br>Core IAM functions: provisioning, authentication, authorization, and de-provisioning accounts.",
+ ex:"HR hires a new analyst → IAM system creates account, assigns role 'Analyst,' grants access to approved systems only. HR terminates → IAM disables all access immediately."},
+
+{d:3, deck:"concepts", q:"What is Account Management and why is it a critical access control?", hint:"Create · Modify · Disable · Review",
+ a:"The lifecycle management of user accounts: creating them with least privilege, modifying them when roles change, DISABLING them immediately on termination, and reviewing them periodically for excess permissions.",
+ ex:"The #1 access control failure: terminated employee's active account used to steal data 3 weeks after they left."},
+
+{d:3, deck:"terms", q:"Define: Tailgating / Piggybacking", hint:"Sneaking in behind someone authorized",
+ a:"An unauthorized person physically follows an authorized person through a secured entry point without using their own credentials. The mantrap/access control vestibule directly prevents this.",
+ ex:"Attacker holds the door open 'politely' while authorized employee badges in. Now attacker is inside the secure area."},
+
+{d:3, deck:"terms", q:"Define: Biometrics", hint:"Something you ARE",
+ a:"Authentication using unique physical or behavioral characteristics: fingerprints, facial recognition, iris scans, voice patterns, or typing cadence. The 'something you ARE' authentication factor.",
+ ex:"iPhone Face ID and fingerprint scanners are consumer biometrics. High-security facilities use iris scanners."},
+
+{d:3, deck:"terms", q:"Define: Access Control Vestibule (Mantrap)", hint:"Two-door airlock — one person at a time",
+ a:"A physical security control using two interlocking doors where the first must close before the second opens. Only one person passes at a time, preventing tailgating.",
+ ex:"Common in data centers, government buildings, and financial vaults. Also called a mantrap or sally port."},
+
+{d:3, deck:"terms", q:"Define: Identity and Access Management (IAM)", hint:"Framework for managing who can access what",
+ a:"Technology and processes that manage digital identities and enforce access policies. Covers account creation, authentication, authorization, and termination across all systems.",
+ ex:"Microsoft Active Directory, Okta, and AWS IAM are IAM platforms used in enterprises."},
+
+// ══════════════════════════════════════════════════
+// DOMAIN 4 ADDITIONS — Network Security
+// ══════════════════════════════════════════════════
+
+{d:4, deck:"concepts", q:"What is a DDoS attack and how does it violate the CIA Triad?", hint:"Distributed Denial of Service — flood from many sources",
+ a:"<strong>DDoS (Distributed Denial of Service)</strong> — An attack using thousands of compromised systems (a botnet) to flood a target server with traffic, overwhelming it and making it unavailable.<br><br>CIA violation: <strong>AVAILABILITY</strong>.",
+ ex:"2016 Dyn DNS DDoS attack took down Twitter, Netflix, Reddit for hours using millions of infected IoT devices."},
+
+{d:4, deck:"concepts", q:"What is a Man-in-the-Middle (MITM) attack?", hint:"Attacker intercepts traffic between two parties",
+ a:"An attack where the attacker secretly INTERCEPTS and potentially alters communications between two parties who believe they are communicating directly with each other.<br><br>Attacks both <strong>Confidentiality</strong> and <strong>Integrity</strong>.",
+ ex:"On public Wi-Fi, attacker intercepts your HTTP traffic, reads your login, and modifies web pages in transit. HTTPS prevents this."},
+
+{d:4, deck:"concepts", q:"What is Defense in Depth and why is it the preferred security architecture?", hint:"Multiple layers — no single point of failure",
+ a:"A security strategy using MULTIPLE overlapping layers of controls so that if one fails, others remain. No single control is relied upon alone.<br><br>Physical → Network → Host → Application → Data layers.",
+ ex:"Firewall blocks most threats. IDS catches what gets through. Endpoint AV catches what IDS misses. MFA stops stolen passwords. Each layer is a net."},
+
+{d:4, deck:"concepts", q:"What is Network Segmentation and what security problem does it solve?", hint:"Divide the network — contain the breach",
+ a:"Dividing a network into isolated segments so that a breach in one area CANNOT spread freely to the rest of the network.<br><br>Techniques: DMZ, VLANs, subnets, firewalls between segments.",
+ ex:"Without segmentation: attacker compromises a printer and reaches the finance server. With VLANs: printer is isolated — finance is unreachable from it."},
+
+{d:4, deck:"concepts", q:"What is Network Access Control (NAC)?", hint:"Is your device healthy enough to enter?",
+ a:"A security solution that evaluates devices BEFORE granting network access. Checks for: OS patch level, antivirus status, compliance status, and identity.<br><br>Critical for IoT devices and BYOD environments.",
+ ex:"Employee laptop without current AV signatures → NAC quarantines it to a remediation VLAN. Must patch before joining the main network."},
+
+{d:4, deck:"concepts", q:"What are Cloud Service Models — SaaS, IaaS, PaaS?", hint:"Software · Infrastructure · Platform as a Service",
+ a:"<strong>SaaS (Software as a Service)</strong> — Vendor provides full application. You use it. (Gmail, Salesforce, Office 365)<br><strong>IaaS (Infrastructure as a Service)</strong> — Vendor provides servers/storage/networking. You manage OS and up. (AWS EC2, Azure VMs)<br><strong>PaaS (Platform as a Service)</strong> — Vendor provides the platform. You deploy your code. (Heroku, AWS Lambda)",
+ ex:"Exam tip: SaaS = least customer responsibility. IaaS = most customer responsibility. Security responsibility shifts with each model."},
+
+{d:4, deck:"concepts", q:"What is the TCP/IP Model and how does it relate to OSI?", hint:"Four layers vs seven — real-world vs conceptual",
+ a:"TCP/IP is the REAL-WORLD protocol suite that runs the internet. It has FOUR layers:<br><strong>1. Network Access</strong> (= OSI layers 1-2)<br><strong>2. Internet</strong> (= OSI layer 3 — IP addresses)<br><strong>3. Transport</strong> (= OSI layer 4 — TCP/UDP, ports)<br><strong>4. Application</strong> (= OSI layers 5-7 — HTTP, DNS, email)",
+ ex:"When you browse a website: DNS resolves the name (Application) → IP routes your packet (Internet) → TCP ensures delivery (Transport)."},
+
+{d:4, deck:"concepts", q:"What are IPv4 and IPv6 and why does IPv6 exist?", hint:"Address exhaustion drove the change",
+ a:"<strong>IPv4</strong> — 32-bit addresses. ~4.3 billion unique addresses. Running out.<br><strong>IPv6</strong> — 128-bit addresses. 340 undecillion unique addresses. Solves exhaustion.<br><br>IPv4 format: 192.168.1.1. IPv6 format: 2001:0db8::1",
+ ex:"The explosion of smartphones, IoT devices, and cloud servers exhausted the IPv4 address pool. IPv6 was the solution."},
+
+{d:4, deck:"terms", q:"Define: VLAN — Virtual Local Area Network", hint:"Logical network segment within physical network",
+ a:"A logically isolated network segment created within a physical network switch. Devices on different VLANs cannot communicate without going through a router or firewall.",
+ ex:"HR VLAN and Finance VLAN on the same physical switch — but HR cannot see Finance traffic without firewall rules permitting it."},
+
+{d:4, deck:"terms", q:"Define: NAC — Network Access Control", hint:"Verify before you connect",
+ a:"A security solution that checks the health and identity of devices attempting to connect to the network, granting, restricting, or quarantining access based on compliance status.",
+ ex:"A personal phone trying to join the corporate network → NAC checks: no MDM profile installed → quarantined to guest VLAN."},
+
+{d:4, deck:"terms", q:"Define: DMZ — Demilitarized Zone", hint:"Buffer zone for public-facing systems",
+ a:"A network segment positioned between the public internet and the internal network. Public-facing servers (web, email, DNS) are placed here to limit attacker access to internal systems.",
+ ex:"Attacker compromises the web server in the DMZ. Internal HR and finance systems are still protected behind the internal firewall."},
+
+{d:4, deck:"terms", q:"Define: HIDS vs NIDS", hint:"Host-based vs Network-based detection",
+ a:"<strong>HIDS (Host-based IDS)</strong> — Monitors a SINGLE device for suspicious activity. Installed on the endpoint itself.<br><strong>NIDS (Network-based IDS)</strong> — Monitors ALL traffic across the network. Installed at network chokepoints.",
+ ex:"HIDS on a file server catches unauthorized local changes. NIDS at the firewall catches a port scan from the internet."},
+
+{d:4, deck:"terms", q:"Define: SLA — Service Level Agreement", hint:"Contractual performance promise",
+ a:"A formal contract between a service provider and customer defining expected service levels: uptime guarantees, response times, support availability, and penalties for failure.",
+ ex:"Cloud SLA: 99.9% uptime = max 8.76 hours downtime/year. If exceeded, customer receives service credits."},
+
+// ══════════════════════════════════════════════════
+// DOMAIN 5 ADDITIONS — Security Operations
+// ══════════════════════════════════════════════════
+
+{d:5, deck:"concepts", q:"What is Change Management and why is it a security control?", hint:"Unauthorized changes are one of the biggest risk vectors",
+ a:"A formal process requiring that ALL changes to systems go through REVIEW, APPROVAL, TESTING, and DOCUMENTATION before being implemented.<br><br>Prevents unauthorized changes that introduce vulnerabilities or instability.",
+ ex:"Patch applied without change management → untested patch breaks the database → 6-hour outage. Change management would have caught this in testing."},
+
+{d:5, deck:"concepts", q:"What is Configuration Management and what does a baseline do?", hint:"Known-good state — measure against it",
+ a:"The process of establishing and maintaining a <strong>secure baseline configuration</strong> for systems — a documented known-good state.<br><br>Deviations from baseline trigger alerts. Hardening removes unneeded services to minimize attack surface.",
+ ex:"Baseline: server runs only ports 22, 443. Config scan finds port 8080 open → not in baseline → investigate immediately."},
+
+{d:5, deck:"concepts", q:"What is Security Awareness Training and what topics does it cover?", hint:"Human layer — hardest to patch",
+ a:"Ongoing training programs that teach employees to recognize and respond to security threats. Required by most compliance frameworks.<br><br>Key topics: phishing recognition, password hygiene, social engineering, incident reporting, clean desk policy, BYOD rules.",
+ ex:"60% of breaches involve the human factor. A 1-hour annual phishing awareness training can cut successful phishing attacks by 50-70%."},
+
+{d:5, deck:"concepts", q:"What is a BYOD policy and what security risks does it introduce?", hint:"Your phone, company data — who controls what?",
+ a:"<strong>BYOD (Bring Your Own Device)</strong> — Policy allowing employees to use personal devices for work.<br><br>Security risks: unmanaged devices, personal/corporate data mixing, lost devices exposing corporate data, no IT control over OS patches.",
+ ex:"Employee's personal phone is lost. It had corporate email. Without MDM (Mobile Device Management) or a BYOD policy, IT cannot remotely wipe corporate data."},
+
+{d:5, deck:"concepts", q:"What is the Data Lifecycle and what security actions apply at each stage?", hint:"Create · Store · Use · Share · Archive · Destroy",
+ a:"<strong>Create</strong> — Classify data at creation. Apply labels.<br><strong>Store</strong> — Encrypt at rest. Access controls.<br><strong>Use</strong> — Access controls, screen locks, DLP.<br><strong>Share</strong> — Encrypted transfer, need-to-know check.<br><strong>Archive</strong> — Long-term encrypted storage. Retention policy.<br><strong>Destroy</strong> — Secure deletion or physical destruction.",
+ ex:"Medical records: created with Confidential label → encrypted at rest → only authorized clinicians access → destroyed by shredding after retention period."},
+
+{d:5, deck:"concepts", q:"What is an Acceptable Use Policy (AUP) and what does it govern?", hint:"What employees can and cannot do on company systems",
+ a:"A documented policy defining what employees ARE and ARE NOT permitted to do with company technology resources — networks, devices, email, and internet access.<br><br>Employees typically sign it during onboarding.",
+ ex:"AUP violations: using company laptop for cryptocurrency mining, accessing inappropriate websites, installing unauthorized software, sharing login credentials."},
+
+{d:5, deck:"concepts", q:"What is a Password Policy and what should it include?", hint:"Complexity · Length · Expiration · History",
+ a:"Organizational rules governing password requirements:<br><strong>Length</strong> — Minimum characters (12+ recommended).<br><strong>Complexity</strong> — Mix of uppercase, lowercase, numbers, symbols.<br><strong>Expiration</strong> — How often passwords must change.<br><strong>History</strong> — Cannot reuse recent passwords.<br><strong>Lockout</strong> — Account locks after failed attempts.",
+ ex:"Exam tip: Modern NIST guidance de-emphasizes mandatory rotation and favors longer passphrases + MFA over frequent changes."},
+
+{d:5, deck:"concepts", q:"What is event logging and monitoring and what type of control is it?", hint:"Record everything — detect threats from the trail",
+ a:"The process of recording system, application, and user activity in logs, then monitoring those logs for suspicious patterns.<br><br>It is a <strong>DETECTIVE</strong> control — it identifies what happened after the fact.<br><br>Critical for: incident investigation, compliance, forensics, threat hunting.",
+ ex:"Log shows 500 failed SSH logins from one IP at 3 AM → alert fires → security team blocks the IP. Without logging, the attack goes unnoticed."},
+
+{d:5, deck:"terms", q:"Define: Change Management", hint:"Formal approval before anything changes",
+ a:"A controlled process requiring documented review, approval, and testing of all system changes before implementation. Prevents unauthorized or untested changes from introducing security gaps.",
+ ex:"Emergency patch for critical vulnerability still goes through an expedited change management process — just faster, not skipped."},
+
+{d:5, deck:"terms", q:"Define: Configuration Management", hint:"Secure baseline — lock it down and watch for drift",
+ a:"The practice of defining, documenting, and maintaining secure system configurations. Includes establishing baselines, detecting unauthorized changes, and hardening systems.",
+ ex:"CIS Benchmarks and DISA STIGs are standard configuration baseline frameworks used in government and enterprise."},
+
+{d:5, deck:"terms", q:"Define: Data Classification", hint:"Label it by sensitivity — then protect accordingly",
+ a:"The process of categorizing data based on sensitivity level so appropriate security controls can be applied. Classification drives who can access data and how it must be protected.",
+ ex:"Government: Top Secret → Secret → Confidential → Unclassified. Business: Restricted → Internal → Public."},
+
+{d:5, deck:"terms", q:"Define: DLP — Data Loss Prevention", hint:"Stops data from leaving where it shouldn't",
+ a:"Technology that monitors, detects, and blocks unauthorized transfer of sensitive data outside the organization — via email, USB, cloud uploads, or printing.",
+ ex:"Employee tries to email a spreadsheet with 10,000 SSNs to a personal Gmail → DLP detects PII pattern → blocks the email and alerts security."},
+
+{d:5, deck:"terms", q:"Define: Acceptable Use Policy (AUP)", hint:"Rules for using company technology",
+ a:"A formal policy document defining permitted and prohibited uses of company technology resources. Employees sign it at hire, acknowledging their responsibilities.",
+ ex:"'Company devices may not be used for personal business, unauthorized software, or accessing illegal content' — AUP language."},
+
+{d:5, deck:"terms", q:"Define: Personally Identifiable Information (PII)", hint:"Any data that identifies a specific person",
+ a:"Any information that can be used alone or in combination to identify a specific individual. Protected by privacy laws worldwide.",
+ ex:"Name, SSN, date of birth, home address, email, phone number, biometric data, IP address — all PII. Exposure triggers breach notification requirements."},
+
+{d:5, deck:"terms", q:"Define: PHI — Protected Health Information", hint:"Medical data protected by HIPAA",
+ a:"Any health information linked to a specific individual that is created, received, or maintained by a healthcare entity. Protected under HIPAA in the United States.",
+ ex:"A patient's diagnosis, treatment records, lab results, and insurance information are all PHI. Breach requires notification to patients and HHS."},
+
+{d:5, deck:"terms", q:"Define: Incident", hint:"Any confirmed or suspected security event",
+ a:"A security event that has been confirmed to have negative impact on the confidentiality, integrity, or availability of information or systems. Triggers the Incident Response Plan.",
+ ex:"Suspected breach = event. Confirmed attacker exfiltrated data = incident. Not all events are incidents — triage determines which."}
+
+]; // end CARDS
+
+// ═══════════════════════════════════════════════════════
+// DECKS definition
+// ═══════════════════════════════════════════════════════
+const DOMAIN_META = {
+  1:{name:"Security Principles", color:"#00e5b0", short:"D1"},
+  2:{name:"Business Continuity", color:"#4ade80", short:"D2"},
+  3:{name:"Access Controls",     color:"#c084fc", short:"D3"},
+  4:{name:"Network Security",    color:"#38bdf8", short:"D4"},
+  5:{name:"Security Operations", color:"#fb923c", short:"D5"}
+};
+
+function getDecks(domainFilter) {
+  const pool = domainFilter === 'all' ? CARDS : CARDS.filter(c => String(c.d) === domainFilter);
+  const decks = [];
+  // "All cards" deck
+  decks.push({id:'all-'+domainFilter, label:'All Cards', sublabel: pool.length + ' cards · every concept + term', cards:[...pool], color:'#ffc84a'});
+  // Concepts only
+  const concepts = pool.filter(c => c.deck === 'concepts');
+  if (concepts.length) decks.push({id:'concepts-'+domainFilter, label:'Concepts & Scenarios', sublabel:concepts.length+' cards · exam-style questions', cards:concepts, color:'#38bdf8'});
+  // Terms only
+  const terms = pool.filter(c => c.deck === 'terms');
+  if (terms.length) decks.push({id:'terms-'+domainFilter, label:'Definitions', sublabel:terms.length+' cards · define the term', cards:terms, color:'#c084fc'});
+  // Per domain (only if showing all)
+  if (domainFilter === 'all') {
+    [1,2,3,4,5].forEach(d => {
+      const dm = DOMAIN_META[d];
+      const dc = CARDS.filter(c => c.d === d);
+      decks.push({id:'d'+d, label:'Domain '+d+' — '+dm.name, sublabel:dc.length+' cards', cards:dc, color:dm.color});
+    });
+  }
+  return decks;
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let activeDomainFilter = 'all';
+let activeDeck = [];
+let activeDeckId = '';
+let cardIdx = 0;
+let flipped = false;
+let results = {}; // cardKey → 'know'|'review'
+
+function cardKey(c){ return c.d+'|'+c.q.slice(0,40); }
+
+// ═══════════════════════════════════════════════════════
+// DOMAIN FILTER
+// ═══════════════════════════════════════════════════════
+function filterDomain(d, btn) {
+  activeDomainFilter = d;
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  results = {};
+  goHome();
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME / DECK SELECT
+// ═══════════════════════════════════════════════════════
+function goHome() {
+  document.getElementById('deck-screen').style.display = 'flex';
+  document.getElementById('study-screen').style.display = 'none';
+  document.getElementById('done-screen').classList.remove('show');
+  document.getElementById('done-screen').style.display = 'none';
+  renderDeckGrid();
+  updateStats();
+}
+
+function renderDeckGrid() {
+  const grid = document.getElementById('deck-grid');
+  grid.innerHTML = '';
+  const decks = getDecks(activeDomainFilter);
+  decks.forEach(deck => {
+    const know = deck.cards.filter(c => results[cardKey(c)] === 'know').length;
+    const pct = deck.cards.length ? Math.round(know / deck.cards.length * 100) : 0;
+    const d = document.createElement('div');
+    d.className = 'deck-card';
+    d.style.setProperty('--dc', deck.color);
+    d.style.cssText += `--dc:${deck.color};`;
+    d.onclick = () => startDeck(deck);
+    d.innerHTML = `
+      <style>#dc${deck.id.replace(/[^a-z0-9]/gi,'_')}::before{background:${deck.color};}</style>
+      <div id="dc${deck.id.replace(/[^a-z0-9]/gi,'_')}">
+        <div class="deck-card-tag" style="color:${deck.color}">${deck.id.startsWith('d') && deck.id.length === 2 ? DOMAIN_META[parseInt(deck.id[1])]?.short||'' : ''}</div>
+        <div class="deck-card-name">${deck.label}</div>
+        <div class="deck-card-count">${deck.sublabel}</div>
+        <div class="deck-card-bar"><div class="deck-card-fill" style="width:${pct}%;background:${deck.color}"></div></div>
+      </div>`;
+    // fix the before pseudo element
+    const inner = d.querySelector('div');
+    inner.style.cssText = '';
+    d.querySelector('.deck-card-name').closest('div').parentElement.style.cssText = '';
+    // simpler approach: just add inline border-left
+    d.style.borderLeft = '3px solid ' + deck.color;
+    grid.appendChild(d);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// START / STUDY
+// ═══════════════════════════════════════════════════════
+function startDeck(deck) {
+  activeDeck = [...deck.cards];
+  activeDeckId = deck.id;
+  cardIdx = 0;
+  flipped = false;
+  document.getElementById('deck-screen').style.display = 'none';
+  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('done-screen').classList.remove('show');
+  document.getElementById('study-screen').style.display = 'flex';
+  document.getElementById('study-title').textContent = deck.label;
+  showCard();
+}
+
+function goStudy() {
+  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('done-screen').classList.remove('show');
+  document.getElementById('study-screen').style.display = 'flex';
+}
+
+function showCard() {
+  if (activeDeck.length === 0 || cardIdx >= activeDeck.length) {
+    showDone(); return;
+  }
+  const c = activeDeck[cardIdx];
+  const col = DOMAIN_META[c.d].color;
+
+  document.getElementById('ff-type').textContent = DOMAIN_META[c.d].name;
+  document.getElementById('ff-type').style.color = col;
+  document.getElementById('ff-q').textContent = c.q;
+  document.getElementById('ff-hint').textContent = c.hint ? '(' + c.hint + ')' : '';
+  document.getElementById('face-front').style.setProperty('--tc', col);
+  document.getElementById('face-front').style.cssText = 'position:relative;';
+
+  document.getElementById('fb-type').textContent = c.q;
+  document.getElementById('fb-type').style.color = col;
+  document.getElementById('fb-answer').innerHTML = c.a;
+  const exEl = document.getElementById('fb-ex');
+  if (c.ex) { exEl.style.display = 'block'; exEl.innerHTML = '💡 ' + c.ex; }
+  else { exEl.style.display = 'none'; }
+
+  // color the top bar of each face
+  document.querySelector('.face.front').style.borderTop = '3px solid ' + col;
+  document.querySelector('.face.back').style.borderTop = '3px solid ' + col;
+
+  flipped = false;
+  document.getElementById('card-body').classList.remove('flipped');
+  document.getElementById('btn-no').disabled = true;
+  document.getElementById('btn-yes').disabled = true;
+
+  document.getElementById('study-pos').textContent = (cardIdx+1) + ' / ' + activeDeck.length;
+  updateStats();
+}
+
+function flipCard() {
+  if (!activeDeck.length || cardIdx >= activeDeck.length) return;
+  flipped = !flipped;
+  document.getElementById('card-body').classList.toggle('flipped', flipped);
+  if (flipped) {
+    document.getElementById('btn-no').disabled = false;
+    document.getElementById('btn-yes').disabled = false;
+  }
+}
+
+function mark(result) {
+  if (!flipped || cardIdx >= activeDeck.length) return;
+  results[cardKey(activeDeck[cardIdx])] = result;
+  cardIdx++;
+  flipped = false;
+  if (cardIdx >= activeDeck.length) { showDone(); return; }
+  showCard();
+}
+
+function prevCard() {
+  if (cardIdx > 0) { cardIdx--; flipped = false; showCard(); }
+}
+
+function shuffleDeck() {
+  for (let i = activeDeck.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [activeDeck[i],activeDeck[j]] = [activeDeck[j],activeDeck[i]];
+  }
+  cardIdx = 0; flipped = false;
+  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('done-screen').classList.remove('show');
+  document.getElementById('study-screen').style.display = 'flex';
+  showCard();
+}
+
+function runReviewOnly() {
+  const reviewCards = activeDeck.filter ? 
+    (activeDomainFilter === 'all' ? CARDS : CARDS.filter(c => String(c.d) === activeDomainFilter)).filter(c => results[cardKey(c)] === 'review') :
+    activeDeck.filter(c => results[cardKey(c)] === 'review');
+  // get review from all cards in current domain filter
+  const pool = activeDomainFilter === 'all' ? CARDS : CARDS.filter(c => String(c.d) === activeDomainFilter);
+  const rev = pool.filter(c => results[cardKey(c)] === 'review');
+  if (!rev.length) { alert('No cards marked Still Learning yet! Go through the deck first.'); return; }
+  activeDeck = rev;
+  cardIdx = 0; flipped = false;
+  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('done-screen').classList.remove('show');
+  document.getElementById('study-screen').style.display = 'flex';
+  document.getElementById('study-title').textContent = 'Review — Still Learning';
+  showCard();
+}
+
+function resetDeck() {
+  // clear results for current deck
+  activeDeck.forEach(c => delete results[cardKey(c)]);
+  cardIdx = 0; flipped = false;
+  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('done-screen').classList.remove('show');
+  document.getElementById('study-screen').style.display = 'flex';
+  showCard();
+}
+
+// ═══════════════════════════════════════════════════════
+// DONE
+// ═══════════════════════════════════════════════════════
+function showDone() {
+  document.getElementById('study-screen').style.display = 'none';
+  const ds = document.getElementById('done-screen');
+  ds.style.display = 'flex';
+  ds.classList.add('show');
+
+  const know = activeDeck.filter(c => results[cardKey(c)] === 'know').length;
+  const rev = activeDeck.filter(c => results[cardKey(c)] === 'review').length;
+  const total = activeDeck.length;
+  const pct = total ? Math.round(know/total*100) : 0;
+
+  document.getElementById('dn-know').textContent = know;
+  document.getElementById('dn-rev').textContent = rev;
+  document.getElementById('done-icon').textContent = pct>=80?'🏆':pct>=60?'💪':'📚';
+  document.getElementById('done-h').textContent = pct>=80?'Excellent!':pct>=60?'Good Work!':'Keep Going!';
+  document.getElementById('done-sub').textContent = pct>=80
+    ? know+' of '+total+' cards — you know this deck. Shuffle and go again to lock it in permanently.'
+    : rev > 0
+      ? 'You have '+rev+' cards still learning. Hit Drill Review Cards to focus on those.'
+      : 'Great run! Shuffle and go again.';
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════
+function updateStats() {
+  const pool = activeDomainFilter === 'all' ? CARDS : CARDS.filter(c => String(c.d) === activeDomainFilter);
+  const total = pool.length;
+  const know = pool.filter(c => results[cardKey(c)] === 'know').length;
+  const rev = pool.filter(c => results[cardKey(c)] === 'review').length;
+  const left = total - know - rev;
+  document.getElementById('sn-total').textContent = total;
+  document.getElementById('sn-know').textContent = know;
+  document.getElementById('sn-rev').textContent = rev;
+  document.getElementById('sn-left').textContent = left;
+  document.getElementById('prog-fill').style.width = (total ? ((know+rev)/total*100) : 0)+'%';
+}
+
+// ═══════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (document.getElementById('study-screen').style.display === 'flex') {
+    if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); flipCard(); }
+    if (e.code === 'ArrowRight' && flipped) mark('know');
+    if (e.code === 'ArrowLeft' && flipped) mark('review');
+    if (e.code === 'ArrowDown') prevCard();
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+goHome();
+</script>
+</body>
+</html>
